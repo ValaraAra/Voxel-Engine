@@ -178,7 +178,7 @@ void World::update(const glm::ivec3& worldPosition, const int renderDistance, co
 }
 
 void World::drawOpaque(const glm::ivec3& worldPosition, const int renderDistance, const glm::mat4& view, const glm::mat4& projection, Shader& shader, const bool wireframe) {
-	ZoneScopedN("World Draw");
+	ZoneScopedN("World Draw Opaque");
 
 	// Set polygon mode to line if wireframe mode enabled
 	if (wireframe) {
@@ -186,12 +186,31 @@ void World::drawOpaque(const glm::ivec3& worldPosition, const int renderDistance
 		glDisable(GL_CULL_FACE);
 	}
 
-	// Draw chunks
-	{
-		ZoneScopedN("Draw Chunks");
+	// Draw opaque chunk meshes
+	for (const ChunkDrawingInfo& chunkInfo : chunksToDraw) {
+		chunkInfo.mesh->meshOpaque->draw(glm::vec3(chunkInfo.offset.x, 0.0f, chunkInfo.offset.y), view, projection, shader);
+	}
 
-		for (const ChunkDrawingInfo& chunkInfo : chunksToDraw) {
-			chunkInfo.mesh->meshOpaque->draw(glm::vec3(chunkInfo.offset.x, 0.0f, chunkInfo.offset.y), view, projection, shader);
+	// Reset polygon mode if wireframe mode enabled
+	if (wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glEnable(GL_CULL_FACE);
+	}
+}
+
+void World::drawModels(const glm::ivec3& worldPosition, const int renderDistance, const glm::mat4& view, const glm::mat4& projection, Shader& shader, const bool wireframe) {
+	ZoneScopedN("World Draw Models");
+
+	// Set polygon mode to line if wireframe mode enabled
+	if (wireframe) {
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glDisable(GL_CULL_FACE);
+	}
+
+	// Draw chunk models
+	for (const ChunkDrawingInfo& chunkInfo : chunksToDraw) {
+		for (const auto& [id, positions] : chunkInfo.mesh->modelPositions) {
+			// Not implemented
 		}
 	}
 
@@ -211,13 +230,9 @@ void World::drawWater(const glm::ivec3& worldPosition, const int renderDistance,
 		glDisable(GL_CULL_FACE);
 	}
 
-	// Draw chunks
-	{
-		ZoneScopedN("Draw Chunks");
-
-		for (const ChunkDrawingInfo& chunkInfo : chunksToDraw) {
-			chunkInfo.mesh->meshLiquid->draw(glm::vec3(chunkInfo.offset.x, 0.0f, chunkInfo.offset.y), view, projection, shader);
-		}
+	// Draw liquid chunk meshes
+	for (const ChunkDrawingInfo& chunkInfo : chunksToDraw) {
+		chunkInfo.mesh->meshLiquid->draw(glm::vec3(chunkInfo.offset.x, 0.0f, chunkInfo.offset.y), view, projection, shader);
 	}
 
 	// Reset polygon mode if wireframe mode enabled

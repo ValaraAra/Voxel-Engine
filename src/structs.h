@@ -98,6 +98,14 @@ struct DirectionVectors2D {
 	static constexpr glm::ivec2 arr[4] = { PX, NX, PZ, NZ };
 };
 
+struct Vertex {
+	uint8_t x;
+	uint8_t y;
+	uint8_t z;
+	uint8_t normal;
+	uint16_t id;
+};
+
 struct VertexOld {
 	glm::vec3 position;
 	glm::vec3 color;

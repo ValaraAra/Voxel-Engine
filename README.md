@@ -1,6 +1,6 @@
-# Practice Engine
+# Voxel Engine
 
-A practice voxel engine built with modern C++ and OpenGL.
+A voxel engine passion project built with modern C++ and OpenGL.
 
 ![Voxel World Screenshot](screenshot.png "Voxel World Screenshot")
 
@@ -8,6 +8,9 @@ A practice voxel engine built with modern C++ and OpenGL.
 - 'Infinite' Terrain with Chunking
 	- Multi-Threaded Chunk Generation
 	- Multi-Threaded Mesh Building
+- Meshing
+	- Bitwise Occupancy Masks
+	- Packed Faces, 4 Bytes Each
 - Rendering
 	- Hybrid Pipeline
 		- Deferred (Opaque)
@@ -16,9 +19,10 @@ A practice voxel engine built with modern C++ and OpenGL.
 		- Blinn-Phong Model
 		- Directional, Point, and Spot
 	- Screen Space Ambient Occlusion
-	- Frustrum Culling
+	- Frustum Culling
 	- Skybox
 	- Water
+- Profiled with Tracy
 
 ## Building
 Tested on Windows 10 with the basic Visual Studio 2026 setup.
@@ -34,6 +38,6 @@ Tested on Windows 10 with the basic Visual Studio 2026 setup.
 Dependencies belong in `external/`
 
 ### Resources
-Skybox textures belong in `resources/textures/skybox` (top, bottom, left, right, front, back)
+Skybox png textures belong in `resources/textures/skybox` (named: top, bottom, left, right, front, back)
 
 Models (vox) belong in `resources/models`

@@ -12,6 +12,7 @@
 #include <chrono>
 #include <thread>
 #include <tracy/Tracy.hpp>
+#include <limits>
 
 World::World(GenerationType generationType, uint32_t seed) : generationType(generationType), seed(seed) {
 
@@ -191,7 +192,7 @@ void World::drawWater(const glm::ivec3& worldPosition, const int renderDistance,
 	}
 }
 
-bool World::hasVoxel(const glm::ivec3& worldPosition) {
+bool World::hasVoxel(const glm::ivec3& worldPosition, bool ignoreLiquid) {
 	glm::ivec2 chunkIndex = getChunkIndex(worldPosition);
 
 	std::shared_ptr<Chunk> chunk;
@@ -205,41 +206,113 @@ bool World::hasVoxel(const glm::ivec3& worldPosition) {
 	}
 
 	glm::ivec3 localPosition = getLocalPosition(worldPosition);
-	return chunk->hasVoxel(localPosition);
+	return chunk->hasVoxel(localPosition, ignoreLiquid);
 }
 
-void World::addVoxel(const glm::ivec3& worldPosition) {
-	glm::ivec2 chunkIndex = getChunkIndex(worldPosition);
+void World::setVoxel(const glm::ivec3& worldPosition, const VoxelType type) {
+	const glm::ivec2 chunkIndex = getChunkIndex(worldPosition);
+	const glm::ivec3 localPosition = getLocalPosition(worldPosition);
+
+	const int dx = (localPosition.x == CHUNK_SIZE - 1) - (localPosition.x == 0);
+	const int dz = (localPosition.z == CHUNK_SIZE - 1) - (localPosition.z == 0);
 
 	std::shared_ptr<Chunk> chunk;
+	std::array<std::shared_ptr<Chunk>, 2> neighbors;
 	{
 		std::shared_lock lock(chunksMutex);
+
 		auto it = chunks.find(chunkIndex);
 		if (it == chunks.end()) {
 			return;
 		}
 		chunk = it->second;
+
+		// Grab neighbors if this is a border voxel
+		if (dx != 0) {
+			auto itNeighbor = chunks.find(chunkIndex + glm::ivec2(dx, 0));
+			if (itNeighbor != chunks.end()) {
+				neighbors[0] = itNeighbor->second;
+			}
+		}
+
+		if (dz != 0) {
+			auto itNeighbor = chunks.find(chunkIndex + glm::ivec2(0, dz));
+			if (itNeighbor != chunks.end()) {
+				neighbors[1] = itNeighbor->second;
+			}
+		}
 	}
 
-	glm::ivec3 localPosition = getLocalPosition(worldPosition);
-	chunk->setVoxelType(localPosition, VoxelType::STONE);
+	// Set voxel type and get result
+	const VoxelChange change = chunk->setVoxelType(localPosition, type);
+	
+	// Mark neighbors dirty if occupancy changed
+	if (change == VoxelChange::OCCUPANCY) {
+		for (const std::shared_ptr<Chunk>& neighbor : neighbors) {
+			if (neighbor) {
+				neighbor->markDirty();
+			}
+		}
+	}
 }
 
 void World::removeVoxel(const glm::ivec3& worldPosition) {
-	glm::ivec2 chunkIndex = getChunkIndex(worldPosition);
+	setVoxel(worldPosition, VoxelType::EMPTY);
+}
 
-	std::shared_ptr<Chunk> chunk;
+// Amanatides and Woo DDA algorithm
+std::optional<VoxelHit> World::raycast(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, const float maxDistance)
+{
+	// Setup
+	const glm::vec3 direction = glm::normalize(rayDirection);
+	const glm::vec3 start = rayOrigin + 0.5f;
+
+	glm::ivec3 voxel = glm::ivec3(glm::floor(start));
+
+	// Setup each axis
+	glm::ivec3 step;
+	glm::vec3 tMax;
+	glm::vec3 tDelta;
+
+	for (int i = 0; i < 3; i++)
 	{
-		std::shared_lock lock(chunksMutex);
-		auto it = chunks.find(chunkIndex);
-		if (it == chunks.end()) {
-			return;
+		if (direction[i] > 0.0f) {
+			step[i] = 1;
+			tDelta[i] = 1.0f / direction[i];
+			tMax[i] = (voxel[i] + 1.0f - start[i]) * tDelta[i];
 		}
-		chunk = it->second;
+		else if (direction[i] < 0.0f) {
+			step[i] = -1;
+			tDelta[i] = -1.0f / direction[i];
+			tMax[i] = (start[i] - voxel[i]) * tDelta[i];
+		}
+		else {
+			step[i] = 0;
+			tDelta[i] = std::numeric_limits<float>::infinity();
+			tMax[i] = std::numeric_limits<float>::infinity();
+		}
 	}
 
-	glm::ivec3 localPosition = getLocalPosition(worldPosition);
-	chunk->setVoxelType(localPosition, VoxelType::EMPTY);
+	// Traversal loop
+	while (true) {
+		int axis = 0;
+		if (tMax.y < tMax[axis]) axis = 1;
+		if (tMax.z < tMax[axis]) axis = 2;
+
+		if (tMax[axis] > maxDistance) {
+			return std::nullopt;
+		}
+
+		voxel[axis] += step[axis];
+		tMax[axis] += tDelta[axis];
+
+		if (hasVoxel(voxel, true)) {
+			glm::ivec3 normal{ 0 };
+			normal[axis] = -step[axis];
+
+			return VoxelHit{ voxel, normal };
+		}
+	}
 }
 
 int World::getChunkCount() {

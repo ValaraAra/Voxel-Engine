@@ -25,27 +25,34 @@ VoxelType Chunk::getVoxelType(const glm::ivec3& position) const {
 	return voxels[getVoxelIndex(position)].type;
 }
 
-void Chunk::setVoxelType(const glm::ivec3& chunkPosition, const VoxelType type) {
+VoxelChange Chunk::setVoxelType(const glm::ivec3& chunkPosition, const VoxelType type) {
 	if (!isValidPosition(chunkPosition)) {
-		return;
+		return VoxelChange::NONE;
 	}
 	std::unique_lock lock(voxelsMutex);
 
 	Voxel& voxel = voxels[getVoxelIndex(chunkPosition)];
 
 	if (voxel.type == type) {
-		return;
+		return VoxelChange::NONE;
 	}
 
+	VoxelChange change;
 	if (type == VoxelType::EMPTY) {
+		change = VoxelChange::OCCUPANCY;
 		voxelCount--;
 	}
 	else if (voxel.type == VoxelType::EMPTY) {
+		change = VoxelChange::OCCUPANCY;
 		voxelCount++;
+	}
+	else {
+		change = VoxelChange::MATERIAL;
 	}
 
 	voxel.type = type;
 	dirty.store(true);
+	return change;
 }
 
 void Chunk::clearVoxels() {

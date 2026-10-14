@@ -16,11 +16,17 @@
 #include <atomic>
 #include <thread>
 #include <condition_variable>
+#include <optional>
 
 struct ChunkDrawingInfo {
 	std::shared_ptr<ChunkMesh> mesh;
 	glm::ivec2 offset;
 	float distance;
+};
+
+struct VoxelHit {
+	glm::ivec3 position;
+	glm::ivec3 normal;
 };
 
 class World {
@@ -37,9 +43,11 @@ public:
 	void updateGenerationQueue(const glm::ivec3& worldPosition, const int renderDistance);
 	void updateMeshingQueue(const glm::ivec3& worldPosition, const int renderDistance);
 
-	bool hasVoxel(const glm::ivec3& position);
-	void addVoxel(const glm::ivec3& position);
+	bool hasVoxel(const glm::ivec3& position, bool ignoreLiquid = false);
+	void setVoxel(const glm::ivec3& position, const VoxelType type);
 	void removeVoxel(const glm::ivec3& position);
+
+	std::optional<VoxelHit> raycast(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, const float maxDistance);
 
 	int getChunkCount();
 	int getRenderedChunkCount();

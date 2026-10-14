@@ -9,13 +9,20 @@
 #include <shared_mutex>
 #include <mutex>
 
+// The type of change resulting from setting a voxel type
+enum class VoxelChange : uint8_t {
+	NONE,
+	MATERIAL,
+	OCCUPANCY
+};
+
 class Chunk {
 public:
 	Chunk(VoxelVolume&& data);
   
 	bool hasVoxel(const glm::ivec3& chunkPosition, bool ignoreLiquid = false) const;
 	VoxelType getVoxelType(const glm::ivec3& chunkPosition) const;
-	void setVoxelType(const glm::ivec3& chunkPosition, const VoxelType type = VoxelType::STONE);
+	VoxelChange setVoxelType(const glm::ivec3& chunkPosition, const VoxelType type);
 	void clearVoxels();
 
 	void getMasks(Masks& masks) const;
@@ -23,6 +30,7 @@ public:
 
 	int getVoxelCount() const { return voxelCount.load(); }
 	bool isDirty() const { return dirty.load(); }
+	void markDirty() { dirty.store(true); }
 	void clearDirty() { dirty.store(false); }
 
 private:

@@ -15,7 +15,8 @@
 #include <chrono>
 #include <tracy/Tracy.hpp>
 
-const float CAMERA_SPEED = 5.0f;
+constexpr float CAMERA_SPEED = 5.0f;
+constexpr float INTERACTION_DISTANCE = 10.0f;
 
 // This looks way too messy
 WorldScene::WorldScene(SceneManager& sceneManager, ShaderManager& shaderManager, InputManager& inputManager, Window& window)
@@ -94,11 +95,22 @@ void WorldScene::enter() {
 		}
 
 		// Mouse
-		if (action == InputAction::MouseLeft) {
-			std::cout << "Mouse Left" << std::endl;
-		}
-		if (action == InputAction::MouseRight) {
-			std::cout << "Mouse Right" << std::endl;
+		if ((action == InputAction::MouseLeft || action == InputAction::MouseRight) && pressed && !cameraMovementDisabled) {
+			const std::optional<VoxelHit> hit = world->raycast(cameraPos, cameraFront, INTERACTION_DISTANCE);
+
+			if (hit) {
+				if (action == InputAction::MouseLeft) {
+					world->removeVoxel(hit->position);
+				}
+				else {
+					glm::ivec3 placePosition = hit->position + hit->normal;
+
+					// Avoid placing at the camera position
+					if (placePosition != glm::ivec3(glm::floor(cameraPos + 0.5f))) {
+						world->setVoxel(placePosition, VoxelType::STONE);
+					}
+				}
+			}
 		}
 
 		// Toggles

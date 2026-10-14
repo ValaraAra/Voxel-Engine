@@ -65,6 +65,12 @@ void WorldScene::enter() {
 
 	// Controls
 	inputCallbackHandles.push_back(inputManager.registerInputCallback([this](InputAction action, bool pressed) {
+		// Exit scene
+		if (action == InputAction::Exit && pressed) {
+			exitSceneRequested = true;
+		}
+
+		// Movement
 		if (action == InputAction::MoveForward) {
 			movement.forward = pressed;
 		}
@@ -86,11 +92,18 @@ void WorldScene::enter() {
 		if (action == InputAction::Shift) {
 			movement.sprint = pressed;
 		}
+
+		// Mouse
+		if (action == InputAction::MouseLeft) {
+			std::cout << "Mouse Left" << std::endl;
+		}
+		if (action == InputAction::MouseRight) {
+			std::cout << "Mouse Right" << std::endl;
+		}
+
+		// Toggles
 		if (action == InputAction::Escape && pressed) {
 			cameraMovementDisabled = !window.toggleCursorMode();
-		}
-		if (action == InputAction::Exit && pressed) {
-			exitSceneRequested = true;
 		}
 		if (action == InputAction::ToggleFlashlight && pressed) {
 			flashlightEnabled = !flashlightEnabled;

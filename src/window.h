@@ -34,11 +34,13 @@ private:
 	bool firstMousePosition = true;
 
 	static void keyCallbackStatic(GLFWwindow* window, int key, int scancode, int action, int mods);
+	static void mouseCallbackStatic(GLFWwindow* window, int button, int action, int mods);
 	static void framebufferSizeCallbackStatic(GLFWwindow* window, int width, int height);
 	static void cursorPosCallbackStatic(GLFWwindow* window, double xpos, double ypos);
 	static void scrollCallbackStatic(GLFWwindow* window, double xoffset, double yoffset);
 
 	void keyCallback(int key, int scancode, int action, int mods);
+	void mouseCallback(int button, int action, int mods);
 	void framebufferSizeCallback(int width, int height);
 	void cursorPosCallback(double xpos, double ypos);
 	void scrollCallback(double xoffset, double yoffset);

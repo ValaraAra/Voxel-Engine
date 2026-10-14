@@ -40,6 +40,7 @@ Window::Window(InputManager& inputManager, const glm::ivec2 size, const char* ti
 		glfwSetWindowUserPointer(glfwWindow, this);
 		glfwSetFramebufferSizeCallback(glfwWindow, framebufferSizeCallbackStatic);
 		glfwSetKeyCallback(glfwWindow, keyCallbackStatic);
+		glfwSetMouseButtonCallback(glfwWindow, mouseCallbackStatic);
 		glfwSetCursorPosCallback(glfwWindow, cursorPosCallbackStatic);
 		glfwSetScrollCallback(glfwWindow, scrollCallbackStatic);
 	}
@@ -151,6 +152,14 @@ void Window::keyCallbackStatic(GLFWwindow* window, int key, int scancode, int ac
 	}
 }
 
+void Window::mouseCallbackStatic(GLFWwindow* window, int button, int action, int mods)
+{
+	Window* instance = static_cast<Window*>(glfwGetWindowUserPointer(window));
+	if (instance) {
+		instance->mouseCallback(button, action, mods);
+	}
+}
+
 void Window::keyCallback(int key, int scancode, int action, int mods) {
 	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
 		inputManager.triggerAction(InputAction::Escape, true);
@@ -194,6 +203,16 @@ void Window::keyCallback(int key, int scancode, int action, int mods) {
 	}
 	if (key == GLFW_KEY_LEFT_CONTROL) {
 		inputManager.triggerAction(InputAction::MoveDown, pressed);
+	}
+}
+
+void Window::mouseCallback(int button, int action, int mods)
+{
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		inputManager.triggerAction(InputAction::MouseLeft, true);
+	}
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
+		inputManager.triggerAction(InputAction::MouseRight, true);
 	}
 }
 

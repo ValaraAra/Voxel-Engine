@@ -14,6 +14,8 @@
 
 class Chunk;
 
+using ModelPositions = std::unordered_map<uint16_t, std::vector<glm::ivec3>>;
+
 struct ChunkNeighbors {
 	std::shared_ptr<Chunk> px;
 	std::shared_ptr<Chunk> nx;
@@ -31,13 +33,13 @@ struct ChunkMeshingOutput {
 	glm::ivec2 chunkIndex = {};
 	std::vector<Face> facesOpaque = {};
 	std::vector<Face> facesLiquid = {};
-	std::unordered_map<uint16_t, std::vector<glm::ivec3>> modelPositions = {};
+	ModelPositions modelPositions = {};
 };
 
 struct ChunkMeshData {
 	std::unique_ptr<Mesh> meshOpaque = nullptr;
 	std::unique_ptr<Mesh> meshLiquid = nullptr;
-	std::unordered_map<uint16_t, std::vector<glm::ivec3>> modelPositions = {};
+	ModelPositions modelPositions = {};
 };
 
 class Chunk {
@@ -53,7 +55,7 @@ public:
 	void clearVoxels();
 
 	// Meshing
-	void getMeshingData(ChunkMasks& masks, std::unordered_map<uint16_t, std::vector<glm::ivec3>> modelPositions) const;
+	ModelPositions getMeshingData(ChunkMasks& masks) const;
 	uint32_t getMask(const int y, const int z, bool liquid) const;
 	void emitChunkFaces(uint32_t mask, int y, int z, uint8_t direction, std::vector<Face>& faceVector) const;
 	std::vector<Face> buildChunkFaces(const ChunkMasks& masks, const ChunkNeighbors& neighbors, const bool liquid) const;

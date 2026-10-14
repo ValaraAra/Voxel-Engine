@@ -93,7 +93,7 @@ namespace {
 			for (const std::string& path : modelPaths) {
 				VoxelModel model;
 				if (VoxParser::loadVoxModel(path, model)) {
-					treeModels.push_back(std::move(model));
+					models.push_back(std::move(model));
 				}
 			}
 

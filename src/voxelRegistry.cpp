@@ -10,7 +10,7 @@ std::unordered_map<std::string, uint16_t> VoxelRegistry::voxelMap{
 	{ ErrorVoxel.stringID, ErrorVoxelID }
 };
 
-uint16_t VoxelRegistry::Register(const VoxelData& data) {
+uint16_t VoxelRegistry::Register(VoxelData data) {
 	auto it = voxelMap.find(data.stringID);
 	if (it != voxelMap.end()) {
 		return it->second;
@@ -18,8 +18,8 @@ uint16_t VoxelRegistry::Register(const VoxelData& data) {
 
 	const uint16_t id = static_cast<uint16_t>(voxelList.size());
 
-	voxelList.push_back(data);
 	voxelMap[data.stringID] = id;
+	voxelList.push_back(std::move(data));
 	return id;
 };
 
@@ -29,7 +29,7 @@ uint16_t VoxelRegistry::GetID(const std::string& stringID) {
 		return it->second;
 	}
 
-	return 1u;
+	return ErrorVoxelID;
 };
 
 const VoxelData& VoxelRegistry::GetData(const std::string& stringID) {

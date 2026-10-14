@@ -83,8 +83,11 @@ void Chunk::clearVoxels() {
 }
 
 // Need to add translucent/transparent mask eventually
-void Chunk::getMeshingData(ChunkMasks& masks, std::unordered_map<uint16_t, std::vector<glm::ivec3>> modelPositions) const {
+ModelPositions Chunk::getMeshingData(ChunkMasks& masks) const {
 	ZoneScopedN("Build Meshing Data");
+
+	ModelPositions modelPositions;
+
 	std::shared_lock lock(voxelsMutex);
 
 	for (int y = 0; y < MAX_HEIGHT; y++) {
@@ -124,6 +127,8 @@ void Chunk::getMeshingData(ChunkMasks& masks, std::unordered_map<uint16_t, std::
 			masks.filled[y * CHUNK_SIZE + z] = maskOpaque | maskLiquid;
 		}
 	}
+
+	return modelPositions;
 }
 
 uint32_t Chunk::getMask(const int y, const int z, bool liquid) const {
@@ -286,16 +291,11 @@ ChunkMeshingOutput Chunk::buildChunkMesh(const ChunkNeighbors& neighbors) const 
 
 	// Get meshing data
 	thread_local ChunkMasks masks;
-	std::unordered_map<uint16_t, std::vector<glm::ivec3>> modelPositions;
-
-	getMeshingData(masks, modelPositions);
-
-	// Swap drain model positions
-	output.modelPositions = std::move(modelPositions);
+	output.modelPositions = getMeshingData(masks);
 
 	// Build faces
-	output.facesOpaque = std::move(buildChunkFaces(masks, neighbors, false));
-	output.facesLiquid = std::move(buildChunkFaces(masks, neighbors, true));
+	output.facesOpaque = buildChunkFaces(masks, neighbors, false);
+	output.facesLiquid = buildChunkFaces(masks, neighbors, true);
 
 	return output;
 }

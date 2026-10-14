@@ -7,7 +7,7 @@
 #include <sstream>
 
 namespace {
-	static Voxel matchVoxel(const uint8_t colorIndex) {
+	Voxel matchVoxel(const uint8_t colorIndex) {
 		static const std::array<Voxel, 256> map = []() {
 			std::array<Voxel, 256> temp;
 			temp.fill(Voxel{ VoxelType::ERROR, VoxelRegistry::ErrorVoxelID });
@@ -25,14 +25,14 @@ namespace {
 			return temp;
 		}();
 
-		if (colorIndex >= map.size()) {
-			return Voxel{ VoxelType::ERROR, VoxelRegistry::ErrorVoxelID };
+		if (colorIndex == 0) {
+			return Voxel{ VoxelType::EMPTY, VoxelRegistry::EmptyVoxelID };
 		}
 
 		return map[colorIndex - 1];
 	}
 
-	static VoxParser::VoxVoxels parseChunkVoxels(const VoxParser::VoxChunk& chunk) {
+	VoxParser::VoxVoxels parseChunkVoxels(const VoxParser::VoxChunk& chunk) {
 		VoxParser::VoxVoxels result;
 
 		// Num voxels
@@ -55,7 +55,7 @@ namespace {
 		return result;
 	}
 
-	static VoxParser::VoxSize parseChunkSize(const VoxParser::VoxChunk& chunk) {
+	VoxParser::VoxSize parseChunkSize(const VoxParser::VoxChunk& chunk) {
 		VoxParser::VoxSize result;
 
 		if (chunk.data.size() != 12) {
@@ -69,7 +69,7 @@ namespace {
 		return result;
 	}
 
-	static VoxParser::VoxChunk readChunk(std::ifstream& fileStream) {
+	VoxParser::VoxChunk readChunk(std::ifstream& fileStream) {
 		VoxParser::VoxChunk chunk;
 
 		// Read chunk info (ID, size, child size)
@@ -102,7 +102,7 @@ namespace {
 		return chunk;
 	}
 
-	static std::vector<VoxParser::VoxChunk> readChildren(std::ifstream& fileStream, std::streamoff bytes) {
+	std::vector<VoxParser::VoxChunk> readChildren(std::ifstream& fileStream, std::streamoff bytes) {
 		std::vector<VoxParser::VoxChunk> children;
 
 		const std::streampos start = fileStream.tellg();
@@ -135,7 +135,7 @@ namespace {
 }
 
 namespace VoxParser {
-	bool loadVoxModel(const std::string& filename, VoxelModel& model) {
+	bool loadVoxModel(const std::string& filename, VoxelModel& model, uint8_t resolution) {
 		try {
 			std::ifstream fileStream(filename, std::ios::binary);
 
@@ -161,7 +161,7 @@ namespace VoxParser {
 			if (std::string(main.id, 4) != "MAIN") {
 				throw std::runtime_error("Missing MAIN chunk!");
 			}
-			if (main.childSize <= 0) {
+			if (main.childSize == 0) {
 				throw std::runtime_error("MAIN chunk has no children!");
 			}
 
@@ -188,14 +188,17 @@ namespace VoxParser {
 
 			// Parse size
 			VoxSize size = parseChunkSize(*sizeChunk);
-			if (size.x <= 0 || size.y <= 0 || size.z <= 0) throw std::runtime_error("Invalid model size!");
+			if (size.x == 0 || size.y == 0 || size.z == 0) throw std::runtime_error("Invalid model size!");
 
 			// Parse voxels
 			VoxVoxels chunkVoxels = parseChunkVoxels(*voxelsChunk);
-			if (chunkVoxels.numVoxels <= 0) throw std::runtime_error("Model has no voxels!");
+			if (chunkVoxels.numVoxels == 0) throw std::runtime_error("Model has no voxels!");
 
 			// Set model dimensions
 			model.dimensions = { static_cast<uint8_t>(size.x), static_cast<uint8_t>(size.z), static_cast<uint8_t>(size.y) };
+
+			// Set model resolution
+			model.resolution = resolution;
 
 			// Set model voxels with converted raw voxels
 			// (Z and Y are swapped since up is Z in VOX)

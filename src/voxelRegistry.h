@@ -4,7 +4,7 @@
 
 class VoxelRegistry {
 public:
-	static uint16_t Register(const VoxelData& data);
+	static uint16_t Register(VoxelData data);
 
 	static uint16_t GetID(const std::string& stringID);
 	static const VoxelData& GetData(const std::string& stringID);

@@ -210,8 +210,15 @@ struct Dimensions {
 	uint8_t z = 0;
 };
 
+struct VoxelModelDefinition {
+	std::string stringID;
+	std::string path;
+	uint8_t resolution = 1;
+};
+
 struct VoxelModel {
 	Dimensions dimensions;
+	uint8_t resolution = 1;
 	std::vector<Voxel> voxels;
 };
 

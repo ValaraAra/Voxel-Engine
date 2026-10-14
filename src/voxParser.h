@@ -30,5 +30,5 @@ namespace VoxParser {
 		std::vector<RawVoxel> voxels{};
 	};
 
-	bool loadVoxModel(const std::string& filename, VoxelModel& model);
+	bool loadVoxModel(const std::string& filename, VoxelModel& model, uint8_t resolution = 1);
 }

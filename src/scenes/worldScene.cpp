@@ -15,6 +15,7 @@
 #include <chrono>
 #include <tracy/Tracy.hpp>
 #include "voxelRegistry.h"
+#include "modelRegistry.h"
 #include <vector>
 
 const float CAMERA_SPEED = 5.0f;
@@ -33,7 +34,7 @@ WorldScene::WorldScene(SceneManager& sceneManager, ShaderManager& shaderManager,
 	tag = "Main";
 
 	// Define voxels
-	const std::vector<VoxelData> voxels{
+	std::vector<VoxelData> blocks{
 		{ VoxelType::BLOCK, "core:stone", "Stone", Texel{127, 127, 127, 255}, true},
 		{ VoxelType::BLOCK, "core:dirt", "Dirt", Texel{145, 107, 76, 255}, true},
 		{ VoxelType::BLOCK, "core:grass", "Grass", Texel{89, 135, 51, 255}, true},
@@ -51,12 +52,25 @@ WorldScene::WorldScene(SceneManager& sceneManager, ShaderManager& shaderManager,
 	worldTextureAtlas->addTexture(VoxelRegistry::ErrorVoxel.stringID, VoxelRegistry::ErrorVoxel.color);
 
 	// Register voxels and add 'textures' to atlas
-	for (const VoxelData& voxelData : voxels) {
-		VoxelRegistry::Register(voxelData);
+	for (VoxelData& voxelData : blocks) {
 		worldTextureAtlas->addTexture(voxelData.stringID, voxelData.color);
+		VoxelRegistry::Register(std::move(voxelData));
 	}
 
 	worldTextureAtlas->finish();
+
+	// Define voxel models
+	std::vector<VoxelModelDefinition> voxelModels{
+		{ "core:grass_model", "resources/models/grass.vox", 8 },
+		{ "core:grass_flower_model", "resources/models/grass-flower-1.vox", 8 },
+	};
+
+	// Register voxel models
+	for (VoxelModelDefinition& model : voxelModels) {
+		if (!ModelRegistry::LoadAndRegister(model.path, model.stringID, model.resolution)) {
+			throw std::runtime_error("Failed to load voxel model: " + model.path);
+		}
+	}
 }
 
 WorldScene::~WorldScene() {
